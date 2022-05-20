@@ -22,6 +22,18 @@ alternatives="
  ntpd:ntpd.8:/usr/share/man/man8/openntpd.8
  ntpd:ntpd:/etc/sv/openntpd"
 
+# openntpd 6.8 assumes adjtimex() will unset STA_UNSYNC. This is not
+# the case on Linux 5.15 (and as far as I can tell has never been the
+# case in Linux). Because of this it always considers the clock
+# unsynced and won't adjust the hardware clock. adjtimex() is called
+# with ADJ_OFFSET_SINGLESHOT to mimic the old adjtime() syscall. To
+# work around this pretend we don't have adjtimex(), openntpd will
+# fall back on the old adjtime() instead which isn't going anywhere
+# anytime soon.
+#
+# There must be an autoconf way to do this but autoconf is hard.
+CFLAGS='-U HAVE_ADJTIMEX'
+
 pre_configure() {
 	autoreconf -fi
 }
